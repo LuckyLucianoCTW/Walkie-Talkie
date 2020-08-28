@@ -7,10 +7,11 @@ from struct import *
 from threading import Thread
 import numpy as np
 import random
+
 uniqueID = random.randrange(0, sys.maxsize)
 frequency = 2800
 
-logging.basicConfig(format = u'[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level = logging.NOTSET)
+logging.basicConfig(format=u'[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level=logging.NOTSET)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
 
@@ -19,30 +20,38 @@ adresa = 'localhost'
 server_address = (adresa, port)
 mesaj = "Uite mesajul"
 
+
 def SendMessage(content):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
-    sock.connect(server_address) 
+    sock.connect(server_address)
     sock.send(content.encode('utf-8'))
     sock.close()
 
-def ReceiveMessages():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
-    sock.connect(server_address)
-    init_pack = pack("!bLL",1,uniqueID,frequency)
+
+sock_recv = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
+
+
+def InitRecvMessages():
+    sock_recv.connect(('localhost', 10000))
+    init_pack = pack("!bLL", 1, uniqueID, frequency)
     init_pack += b'handshake'
-    sock.send(init_pack)
-    data = sock.recv(1024)
-    while True:
-        data = sock.recv(1024)
+    sock_recv.send(init_pack)
+    data = sock_recv.recv(1024)
+    return 1
+
+
+def ReceiveMessages():
+    try:
+        data = sock_recv.recv(1024)
         if len(data) > 0 and data != b'aliveevila':
-            logging.info(data)
-        time.sleep(1)
-    sock.close()
-    
+            print(data)
+            return data
+        else:
+            return ""
+    except:
+        return ""
 
 
-thread = Thread(target=ReceiveMessages)
-thread.start()
+InitRecvMessages()
 while True:
-    x = input("\nYour Message : ")
-    SendMessage(x)
+    print(ReceiveMessages())
